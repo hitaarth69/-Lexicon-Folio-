@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Lexicon Folio · Open Dictionary</title>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #2b1f14;
+      font-family: 'EB Garamond', serif;
+      display: flex;
+      justify-content: center;
+      padding: 25px 15px;
+      min-height: 100vh;
+      transition: background 0.4s;
+    }
+    .book {
+      max-width: 1260px;
+      width: 100%;
+      background: #f4ecd8;
+      background-image: radial-gradient(ellipse at 30% 40%, rgba(215, 190, 160, 0.25) 0%, transparent 70%);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.8), 10px 0 25px rgba(0, 0, 0, 0.5), 0 15px 50px rgba(0, 0, 0, 0.9);
+      border-radius: 4px 16px 16px 4px;
+      padding: 40px 45px 50px 50px;
+      position: relative;
+      display: flex;
+      gap: 30px;
+      transition: background 0.4s, box-shadow 0.4s;
+    }
+    .book::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      background: linear-gradient(to right, #c9a84c, #f7e7b4, #c9a84c, #a5853a);
+      border-radius: 4px 0 0 4px;
+    }
+    .thumb-index {
+      position: sticky;
+      top: 20px;
+      align-self: flex-start;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: #8b7a62;
+      min-width: 26px;
+      text-align: center;
+      padding-top: 8px;
+      user-select: none;
+    }
+    .thumb-index span {
+      cursor: pointer;
+      padding: 2px 0;
+      border-radius: 3px;
+      transition: 0.2s;
+      letter-spacing: 0.3px;
+      line-height: 1.2;
+    }
+    .thumb-index span:hover {
+      background: #c9a84c;
+      color: #1f160e;
+      transform: scale(1.25);
+    }
+    .thumb-index span.active {
+      background: #c9a84c;
+      color: #1f160e;
+    }
+    .thumb-index span.loading {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .content {
+      flex: 1;
+      min-width: 0;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px 20px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #dacbb8;
+      padding-bottom: 12px;
+    }
+    .toolbar .letter-header {
+      font-size: 64px;
+      font-weight: 600;
+      color: #3a2c1c;
+      line-height: 0.9;
+      font-family: 'EB Garamond', serif;
+      letter-spacing: 4px;
+      margin-right: 8px;
+      min-width: 70px;
+    }
+    .search-box {
+      flex: 1;
+      min-width: 180px;
+      position: relative;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px 16px;
+      border: 1px solid #dacbb8;
+      border-radius: 40px;
+      background: rgba(255, 247, 235, 0.7);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: #1f160e;
+      outline: none;
+      transition: 0.3s;
+      backdrop-filter: blur(4px);
+    }
+    .search-box input:focus {
+      border-color: #c9a84c;
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.25);
+      background: #fffbf0;
+    }
+    .search-box input::placeholder {
+      color: #a3927a;
+      font-style: italic;
+    }
+    .random-btn {
+      font-family: 'Inter', sans-serif;
+      background: #2b1f14;
+      color: #f4ecd8;
+      border: none;
+      padding: 8px 22px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.3s;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .random-btn:hover {
+      background: #c9a84c;
+      color: #1f160e;
+      transform: scale(1.02);
+    }
+    .debug-btn {
+      font-family: 'Inter', sans-serif;
+      background: #6b5d4a;
+      color: #f4ecd8;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .debug-btn:hover {
+      background: #c9a84c;
+      color: #1f160e;
+    }
+    .entries-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 35px;
+      column-rule: 1px solid rgba(139, 122, 98, 0.25);
+    }
+    .entry {
+      break-inside: avoid;
+      padding-right: 6px;
+      border-left: 3px solid transparent;
+      padding-left: 8px;
+      transition: border-color 0.25s;
+      margin-bottom: 4px;
+    }
+    .entry:hover {
+      border-left-color: #c9a84c;
+    }
+    .entry-word {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1f160e;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 6px 14px;
+      margin-bottom: 1px;
+      cursor: default;
+    }
+    .entry-word .pronunciation {
+      font-weight: 400;
+      font-size: 14px;
+      color: #6b5d4a;
+      font-family: 'Inter', sans-serif;
+      font-style: italic;
+    }
+    .entry-word .acronym-badge {
+      font-family: 'Inter', sans-serif;
+      font-size: 9.5px;
+      background: #c9a84c;
+      color: #1f160e;
+      padding: 0 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      line-height: 20px;
+      white-space: nowrap;
+    }
+    .entry-word .acronym-badge.expand {
+      background: #b88a4b;
+      color: #fff;
+    }
+    .entry-word .acronym-badge.missing {
+      background: #dacbb8;
+      color: #6b5d4a;
+    }
+    .entry-def {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #2b1f14;
+      padding-left: 6px;
+    }
+    .entry-def .def-item {
+      display: block;
+      margin-bottom: 2px;
+    }
+    .entry-def .def-item strong {
+      font-weight: 600;
+    }
+    .entry-def .example {
+      display: block;
+      font-style: italic;
+      color: #6b5d4a;
+      font-size: 15px;
+      margin-top: 2px;
+      padding-left: 14px;
+    }
+    .entry-def .example::before {
+      content: "— ";
+    }
+    .entry-meta {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: #8b7a62;
+      margin-top: 5px;
+      padding-left: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 18px;
+      letter-spacing: 0.2px;
+    }
+    .entry-meta .root {
+      background: rgba(201, 168, 76, 0.15);
+      padding: 0 10px;
+      border-radius: 30px;
+      border: 1px dashed #c9a84c;
+      cursor: help;
+      font-weight: 500;
+    }
+    .neighbours {
+      grid-column: 1 / -1;
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid #dacbb8;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: #6b5d4a;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px 20px;
+    }
+    .neighbours span {
+      background: rgba(0, 0, 0, 0.03);
+      padding: 4px 18px;
+      border-radius: 30px;
+    }
+    .neighbours .neighbour-word {
+      font-family: 'EB Garamond', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f160e;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .neighbours .neighbour-word:hover {
+      color: #c9a84c;
+      text-decoration: underline;
+    }
+    .neighbours .divider {
+      background: transparent;
+      padding: 0 4px;
+      color: #c9a84c;
+    }
+    .no-results,
+    .loading-msg {
+      grid-column: 1 / -1;
+      text-align: center;
+      font-family: 'Inter', sans-serif;
+      color: #8b7a62;
+      padding: 40px 0;
+      font-size: 18px;
+    }
+    .no-results strong,
+    .loading-msg strong {
+      color: #2b1f14;
+    }
+    .loading-msg .spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid #dacbb8;
+      border-top-color: #c9a84c;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    .lamp-toggle {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #2b1f14;
+      border: 2px solid #c9a84c;
+      color: #f4ecd8;
+      padding: 12px 22px;
+      border-radius: 50px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+      z-index: 999;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .lamp-toggle:hover {
+      background: #c9a84c;
+      color: #1f160e;
+      border-color: #f4ecd8;
+    }
+    body.lamp-mode .book {
+      background: #e6dac6;
+      background-image: radial-gradient(ellipse at 50% 35%, rgba(255, 235, 200, 0.95) 0%, rgba(180, 150, 110, 0.5) 65%, rgba(70, 50, 30, 0.7) 100%);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.9), 10px 0 25px rgba(0, 0, 0, 0.7), 0 15px 50px rgba(0, 0, 0, 0.95);
+    }
+    body.lamp-mode .entry-word,
+    body.lamp-mode .entry-def,
+    body.lamp-mode .letter-header {
+      text-shadow: 0 1px 4px rgba(255, 200, 100, 0.15);
+    }
+    .debug-panel {
+      display: none;
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      background: #1f160e;
+      color: #f4ecd8;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 500px;
+      max-height: 400px;
+      overflow: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      border: 2px solid #c9a84c;
+      z-index: 1000;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .debug-panel.active {
+      display: block;
+    }
+    .debug-panel .close {
+      float: right;
+      cursor: pointer;
+      font-size: 18px;
+      color: #c9a84c;
+      font-weight: bold;
+    }
+    @media (max-width: 820px) {
+      .book {
+        padding: 24px 18px 30px 20px;
+        flex-direction: column;
+      }
+      .thumb-index {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        position: relative;
+        top: 0;
+        gap: 1px 10px;
+        padding-top: 0;
+        margin-bottom: 6px;
+        min-width: unset;
+      }
+      .thumb-index span {
+        font-size: 14px;
+        padding: 0 2px;
+      }
+      .entries-grid {
+        grid-template-columns: 1fr;
+        column-rule: none;
+      }
+      .toolbar .letter-header {
+        font-size: 44px;
+        min-width: 50px;
+      }
+      .debug-panel {
+        max-width: 90%;
+        right: 5%;
+        bottom: 80px;
+      }
+    }
+    @media (max-width: 480px) {
+      .book {
+        padding: 16px 12px 20px;
+      }
+      .entry-word {
+        font-size: 19px;
+      }
+      .entry-def {
+        font-size: 15px;
+      }
+      .lamp-toggle {
+        bottom: 14px;
+        right: 14px;
+        padding: 8px 14px;
+        font-size: 12px;
+      }
+      .random-btn {
+        padding: 6px 14px;
+        font-size: 12px;
+      }
+      .debug-btn {
+        padding: 4px 10px;
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="book" id="bookContainer">
+    <div class="thumb-index" id="thumbIndex"></div>
+    <div class="content">
+      <div class="toolbar">
+        <span class="letter-header" id="letterHeader">A</span>
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Search any word…" />
+        </div>
+        <button class="random-btn" id="randomBtn">🎲 Spin</button>
+        <button class="debug-btn" id="debugBtn">🐞 Debug</button>
+      </div>
+      <div class="entries-grid" id="entriesGrid">
+        <div class="loading-msg">
+          <span class="spinner"></span> Loading <strong>A</strong> …
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debug Panel -->
+  <div class="debug-panel" id="debugPanel">
+    <span class="close" id="debugClose">&times;</span>
+    <pre id="debugContent">Click "Debug" on a word to see raw data.</pre>
+  </div>
+
+  <button class="lamp-toggle" id="lampToggle">🕯️ Lamplight</button>
+
+  <script>
+    // ================================================================
+    // 1.  CONFIG & CACHES
+    // ================================================================
+    const URLS = [
+      (letter, pair) =>
+      `https://raw.githubusercontent.com/mhollingshead/open-dictionary/main/api/${letter}/${pair}.json`,
+      (letter, pair) =>
+      `https://cdn.jsdelivr.net/gh/mhollingshead/open-dictionary@main/api/${letter}/${pair}.json`
+    ];
+
+    const letterCache = {};
+    const wordCache = {};
+    let currentLetter = 'A';
+    let isLoading = false;
+    let rawDataStore = {}; // stores raw JSON for debug
+
+    // DOM refs
+    const thumbIndex = document.getElementById('thumbIndex');
+    const letterHeader = document.getElementById('letterHeader');
+    const searchInput = document.getElementById('searchInput');
+    const entriesGrid = document.getElementById('entriesGrid');
+    const randomBtn = document.getElementById('randomBtn');
+    const lampToggle = document.getElementById('lampToggle');
+    const debugBtn = document.getElementById('debugBtn');
+    const debugPanel = document.getElementById('debugPanel');
+    const debugContent = document.getElementById('debugContent');
+    const debugClose = document.getElementById('debugClose');
+
+    // ================================================================
+    // 2.  FALLBACK DICTIONARY (if network fails)
+    // ================================================================
+    const FALLBACK = {
+      a: [
+        { word: "Apple", pronunciation: "/ˈæp.əl/", definitions: ["A round fruit."], example: "She ate an apple.",
+          etymology: "Old English *æppel*" },
+        { word: "Abyss", pronunciation: "/əˈbɪs/", definitions: ["A deep chasm."], example: "He stared into the abyss.",
+          etymology: "Greek *abyssos*" }
+      ],
+      b: [
+        { word: "Book", pronunciation: "/bʊk/", definitions: ["A set of printed pages."], example: "She read a book.",
+          etymology: "Old English *bōc*" }
+      ],
+      e: [
+        { word: "Ephemeral", pronunciation: "/ɪˈfem.ər.əl/", definitions: ["Lasting for a very short time."],
+          example: "Ephemeral beauty.", etymology: "Greek *ephemeros*" }
+      ],
+      s: [
+        { word: "Serendipity", pronunciation: "/ˌser.ənˈdɪp.ə.ti/",
+          definitions: ["Happy discoveries by chance."], example: "Pure serendipity!",
+          etymology: "From *The Three Princes of Serendip*" }
+      ]
+    };
+
+    // ================================================================
+    // 3.  ULTRA-AGGRESSIVE EXTRACTOR
+    // ================================================================
+    function extractAllStrings(obj, path = '') {
+      const strings = [];
+      if (typeof obj === 'string') {
+        const trimmed = obj.trim();
+        if (trimmed && trimmed.length > 2 && !trimmed.startsWith('{') && !trimmed.startsWith('[') && !trimmed.includes(
+            'http')) {
+          strings.push(trimmed);
+        }
+        return strings;
+      }
+      if (Array.isArray(obj)) {
+        for (const item of obj) {
+          strings.push(...extractAllStrings(item, path));
+        }
+        return strings;
+      }
+      if (obj && typeof obj === 'object') {
+        // Prioritize certain keys
+        const priorityKeys = ['definition', 'definitions', 'def', 'meaning', 'meanings', 'gloss', 'text', 'description',
+          'sense'
+        ];
+        for (const key of priorityKeys) {
+          if (obj[key] !== undefined) {
+            strings.push(...extractAllStrings(obj[key], path + '.' + key));
+          }
+        }
+        // Then go through all other keys
+        for (const key of Object.keys(obj)) {
+          if (priorityKeys.includes(key)) continue;
+          if (['word', 'pronunciation', 'etymology', 'partOfSpeech', 'senses', 'examples', 'example'].includes(key))
+            continue;
+          strings.push(...extractAllStrings(obj[key], path + '.' + key));
+        }
+        // Also check senses if present
+        if (obj.senses) {
+          strings.push(...extractAllStrings(obj.senses, path + '.senses'));
+        }
+        // Check examples
+        if (obj.examples) {
+          strings.push(...extractAllStrings(obj.examples, path + '.examples'));
+        }
+        if (obj.example) {
+          strings.push(...extractAllStrings(obj.example, path + '.example'));
+        }
+      }
+      return strings;
+    }
+
+    function transformEntry(raw) {
+      if (!raw || !raw.word) return null;
+
+      const word = raw.word;
+      const pronunciation = raw.pronunciation || raw.pronunciation_text || '';
+
+      // Extract all candidate strings
+      let candidates = extractAllStrings(raw);
+
+      // Also specifically dig into senses
+      if (raw.senses) {
+        if (Array.isArray(raw.senses)) {
+          for (const s of raw.senses) {
+            if (s.definitions) candidates.push(...extractAllStrings(s.definitions));
+            if (s.definition) candidates.push(...extractAllStrings(s.definition));
+            if (s.def) candidates.push(...extractAllStrings(s.def));
+            if (s.examples) candidates.push(...extractAllStrings(s.examples));
+          }
+        } else if (typeof raw.senses === 'object') {
+          for (const k of Object.keys(raw.senses)) {
+            const s = raw.senses[k];
+            if (s.definitions) candidates.push(...extractAllStrings(s.definitions));
+            if (s.definition) candidates.push(...extractAllStrings(s.definition));
+            if (s.def) candidates.push(...extractAllStrings(s.def));
+            if (s.examples) candidates.push(...extractAllStrings(s.examples));
+          }
+        }
+      }
+
+      // Deduplicate and filter out common noise
+      const unique = [...new Set(candidates)];
+      const filtered = unique.filter(t =>
+        t.length > 4 &&
+        !t.startsWith('http') &&
+        !t.startsWith('{') &&
+        !t.startsWith('[') &&
+        !t.includes('json') &&
+        !t.includes('www.') &&
+        !t.includes('.com') &&
+        !/^[0-9]+$/.test(t) // not just numbers
+      );
+
+      // If still empty, add placeholder
+      const definitions = filtered.length ? filtered : ['(Definition not available in dataset)'];
+
+      // Extract example from candidates
+      let example = '';
+      // Look for something that might be an example (contains quotes or is longer)
+      for (const c of candidates) {
+        if (c.includes('"') || c.includes('“') || c.includes('”') || c.includes("'") || c.length > 60) {
+          example = c;
+          break;
+        }
+      }
+      // Or from raw example fields
+      if (!example && raw.senses) {
+        if (Array.isArray(raw.senses)) {
+          for (const s of raw.senses) {
+            if (s.examples && s.examples.length) { example = s.examples[0]; break; }
+            if (s.example) { example = s.example; break; }
+          }
+        } else if (typeof raw.senses === 'object') {
+          for (const k of Object.keys(raw.senses)) {
+            const s = raw.senses[k];
+            if (s.examples && s.examples.length) { example = s.examples[0]; break; }
+            if (s.example) { example = s.example; break; }
+          }
+        }
+      }
+
+      const etymology = raw.etymology || raw.etym || raw.etymology_text || 'Etymology unknown';
+      const isAcronym = word === word.toUpperCase() && word.length >= 2;
+
+      let pos = '';
+      if (raw.senses) {
+        if (Array.isArray(raw.senses)) {
+          pos = raw.senses.map(s => s.partOfSpeech).filter(Boolean).join('; ');
+        } else if (typeof raw.senses === 'object') {
+          pos = Object.keys(raw.senses).join('; ');
+        }
+      }
+
+      // Store raw data for debug
+      rawDataStore[word] = raw;
+
+      return {
+        word,
+        pronunciation,
+        definitions,
+        example,
+        etymology,
+        acronym: isAcronym ? '⚠️ Acronym' : null,
+        _pos: pos
+      };
+    }
+
+    // ================================================================
+    // 4.  FETCH WITH FALLBACK
+    // ================================================================
+    async function fetchWithFallback(letter, pair) {
+      for (const urlFn of URLS) {
+        const url = urlFn(letter, pair);
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            console.log(`✅ Fetched ${url} – ${Object.keys(data).length} words`);
+            return data;
+          }
+        } catch (e) {
+          console.warn(`❌ Failed: ${url}`, e);
+        }
+      }
+      console.warn(`⚠️ All sources failed for ${letter}/${pair}.json`);
+      return null;
+    }
+
+    // ================================================================
+    // 5.  LOAD LETTER
+    // ================================================================
+    async function loadLetter(letter) {
+      if (isLoading) return;
+      if (letterCache[letter]) {
+        renderEntries(letterCache[letter], letter);
+        return;
+      }
+
+      isLoading = true;
+      document.querySelectorAll('.thumb-index span').forEach(el => {
+        if (el.dataset.letter.toLowerCase() === letter) el.classList.add('loading');
+      });
+
+      entriesGrid.innerHTML =
+        `<div class="loading-msg"><span class="spinner"></span> Fetching <strong>${letter.toUpperCase()}</strong> …</div>`;
+
+      const subLetters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+      const promises = subLetters.map(ch => fetchWithFallback(letter, letter + ch));
+      const results = await Promise.allSettled(promises);
+
+      const allEntries = [];
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          const data = result.value;
+          for (const [word, raw] of Object.entries(data)) {
+            const transformed = transformEntry({ ...raw, word });
+            if (transformed) {
+              allEntries.push(transformed);
+              wordCache[word.toLowerCase()] = transformed;
+            }
+          }
+        }
+      }
+
+      // If nothing, use fallback
+      if (allEntries.length === 0 && FALLBACK[letter]) {
+        console.warn(`⚠️ Using fallback data for ${letter}`);
+        for (const fb of FALLBACK[letter]) {
+          const transformed = transformEntry(fb);
+          if (transformed) {
+            allEntries.push(transformed);
+            wordCache[fb.word.toLowerCase()] = transformed;
+          }
+        }
+      }
+
+      allEntries.sort((a, b) => a.word.localeCompare(b.word));
+
+      letterCache[letter] = allEntries;
+      isLoading = false;
+      document.querySelectorAll('.thumb-index span').forEach(el => el.classList.remove('loading'));
+
+      renderEntries(allEntries, letter);
+    }
+
+    // ================================================================
+    // 6.  RENDER
+    // ================================================================
+    function renderEntries(entries, letter) {
+      if (!entries || entries.length === 0) {
+        entriesGrid.innerHTML =
+          `<div class="no-results">No entries found for <strong>${letter.toUpperCase()}</strong>.</div>`;
+        return;
+      }
+
+      let html = '';
+      const allWords = entries.map(e => e.word);
+      const first = entries[0].word;
+      const idx = allWords.indexOf(first);
+      const prevWord = idx > 0 ? allWords[idx - 1] : null;
+      const nextWord = idx < allWords.length - 1 ? allWords[idx + 1] : null;
+
+      for (const entry of entries) {
+        const defs = entry.definitions.map((d, i) =>
+          `<span class="def-item"><strong>${i + 1}.</strong> ${d}</span>`
+        ).join('');
+
+        const exampleHtml = entry.example ? `<span class="example">${entry.example}</span>` : '';
+        const badgeHtml = entry.acronym ?
+          `<span class="acronym-badge expand">${entry.acronym}</span>` :
+          `<span class="acronym-badge missing">No acronym</span>`;
+
+        // Add a debug data attribute
+        html += `
+          <div class="entry" data-word="${entry.word}">
+            <div class="entry-word">
+              ${entry.word}
+              ${entry.pronunciation ? `<span class="pronunciation">${entry.pronunciation}</span>` : ''}
+              ${badgeHtml}
+            </div>
+            <div class="entry-def">
+              ${defs}
+              ${exampleHtml}
+            </div>
+            <div class="entry-meta">
+              <span class="root">🌱 ${entry.etymology}</span>
+              ${entry._pos ? `<span style="font-style:italic;">${entry._pos}</span>` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      let neighboursHtml = '';
+      if (prevWord || nextWord) {
+        neighboursHtml = `
+          <div class="neighbours">
+            ${prevWord ? `<span>⬅ <span class="neighbour-word" data-word="${prevWord}">${prevWord}</span> (prev)</span>` : ''}
+            ${prevWord && nextWord ? `<span class="divider">|</span>` : ''}
+            ${nextWord ? `<span><span class="neighbour-word" data-word="${nextWord}">${nextWord}</span> (next) ➡</span>` : ''}
+            <span style="margin-left:auto;background:transparent;">📖 ${entries.length} entries</span>
+          </div>
+        `;
+      }
+
+      entriesGrid.innerHTML = html + neighboursHtml;
+
+      // Neighbour click
+      document.querySelectorAll('.neighbour-word').forEach(el => {
+        el.addEventListener('click', () => {
+          searchInput.value = el.dataset.word;
+          handleSearch(el.dataset.word);
+        });
+      });
+
+      // Debug click on entries: click the word to show raw data
+      document.querySelectorAll('.entry').forEach(el => {
+        const word = el.dataset.word;
+        el.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          showDebug(word);
+        });
+      });
+
+      console.log(`✅ Rendered ${entries.length} words for ${letter}.`);
+      if (entries.length > 0) {
+        console.log('Sample entry:', entries[0]);
+        console.log('Raw data for sample:', rawDataStore[entries[0].word]);
+      }
+    }
+
+    // ================================================================
+    // 7.  SEARCH
+    // ================================================================
+    async function handleSearch(query) {
+      const word = query.trim();
+      if (!word) { loadLetter(currentLetter.toLowerCase()); return; }
+
+      const lower = word.toLowerCase();
+
+      if (wordCache[lower]) {
+        renderEntries([wordCache[lower]], '🔍');
+        letterHeader.textContent = '🔍';
+        updateThumbActive(null);
+        return;
+      }
+
+      for (const [letter, entries] of Object.entries(letterCache)) {
+        const found = entries.find(e => e.word.toLowerCase() === lower);
+        if (found) {
+          wordCache[lower] = found;
+          renderEntries([found], '🔍');
+          letterHeader.textContent = '🔍';
+          updateThumbActive(null);
+          return;
+        }
+      }
+
+      // Fetch
+      const firstLetter = lower.charAt(0);
+      const firstTwo = lower.slice(0, 2);
+      let data = null;
+      for (const urlFn of URLS) {
+        const url = urlFn(firstLetter, firstTwo);
+        try {
+          const res = await fetch(url);
+          if (res.ok) { data = await res.json(); break; }
+        } catch (e) {}
+      }
+
+      if (data) {
+        for (const [key, raw] of Object.entries(data)) {
+          if (key.toLowerCase() === lower) {
+            const found = transformEntry({ ...raw, word: key });
+            if (found) {
+              wordCache[lower] = found;
+              renderEntries([found], '🔍');
+              letterHeader.textContent = '🔍';
+              updateThumbActive(null);
+              return;
+            }
+          }
+        }
+      }
+
+      // Fallback
+      for (const [letter, fbList] of Object.entries(FALLBACK)) {
+        const found = fbList.find(f => f.word.toLowerCase() === lower);
+        if (found) {
+          const transformed = transformEntry(found);
+          wordCache[lower] = transformed;
+          renderEntries([transformed], '🔍');
+          letterHeader.textContent = '🔍';
+          updateThumbActive(null);
+          return;
+        }
+      }
+
+      entriesGrid.innerHTML =
+        `<div class="no-results">No definition found for <strong>“${word}”</strong>.</div>`;
+    }
+
+    // ================================================================
+    // 8.  DEBUG
+    // ================================================================
+    function showDebug(word) {
+      const raw = rawDataStore[word];
+      if (raw) {
+        debugContent.textContent = JSON.stringify(raw, null, 2);
+        debugPanel.classList.add('active');
+      } else {
+        debugContent.textContent = 'No raw data available for this word.';
+        debugPanel.classList.add('active');
+      }
+    }
+
+    debugBtn.addEventListener('click', () => {
+      // Toggle debug panel
+      debugPanel.classList.toggle('active');
+      if (debugPanel.classList.contains('active')) {
+        const firstEntry = document.querySelector('.entry');
+        if (firstEntry) {
+          const word = firstEntry.dataset.word;
+          showDebug(word);
+        } else {
+          debugContent.textContent = 'No entries loaded yet.';
+        }
+      }
+    });
+
+    debugClose.addEventListener('click', () => {
+      debugPanel.classList.remove('active');
+    });
+
+    // ================================================================
+    // 9.  UI HELPERS
+    // ================================================================
+    function updateThumbActive(letter) {
+      document.querySelectorAll('.thumb-index span').forEach(el => {
+        el.classList.toggle('active', el.dataset.letter === letter);
+      });
+    }
+
+    // Build thumb index
+    for (let i = 65; i <= 90; i++) {
+      const letter = String.fromCharCode(i);
+      const span = document.createElement('span');
+      span.textContent = letter;
+      span.dataset.letter = letter;
+      span.addEventListener('click', () => {
+        if (isLoading) return;
+        searchInput.value = '';
+        currentLetter = letter;
+        letterHeader.textContent = letter;
+        loadLetter(letter.toLowerCase());
+        updateThumbActive(letter);
+      });
+      thumbIndex.appendChild(span);
+    }
+
+    // Search input
+    searchInput.addEventListener('input', () => {
+      const val = searchInput.value.trim();
+      if (val === '') {
+        letterHeader.textContent = currentLetter;
+        loadLetter(currentLetter.toLowerCase());
+      } else {
+        handleSearch(val);
+      }
+    });
+
+    // Random
+    randomBtn.addEventListener('click', async () => {
+      const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+      const randLetter = letters[Math.floor(Math.random() * letters.length)];
+      if (!letterCache[randLetter]) await loadLetter(randLetter);
+      const entries = letterCache[randLetter];
+      if (entries && entries.length > 0) {
+        const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+        searchInput.value = randomEntry.word;
+        handleSearch(randomEntry.word);
+        letterHeader.textContent = '🎲';
+        document.getElementById('bookContainer').scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+
+    // Lamp
+    lampToggle.addEventListener('click', () => {
+      document.body.classList.toggle('lamp-mode');
+      lampToggle.textContent = document.body.classList.contains('lamp-mode') ? '☀️ Day Reading' : '🕯️ Lamplight';
+    });
+
+    // ---- START ----
+    updateThumbActive('A');
+    loadLetter('a');
+
+    // ================================================================
+    // 10.  INSTRUCTIONS
+    // ================================================================
+    console.log('%c📖 LEXICON FOLIO – DEBUG MODE', 'font-size:20px; font-weight:bold;');
+    console.log('If definitions are missing, click the "🐞 Debug" button or double-click any word.');
+    console.log('It will show you the raw JSON. Copy that and send it to me.');
+    console.log('Also check the Network tab (F12 > Network) to see the fetched files.');
+  </script>
+</body>
+</html>
